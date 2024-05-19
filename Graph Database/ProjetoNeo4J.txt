@@ -1,0 +1,94 @@
+Projeto Neo4j
+
+Thiago Ayres Kimura - RA: 22.221.045-2
+Giovanna Borges Tamagnini - RA: 22.221.016-3
+Gabryel Lourenço Maciel de Morais - RA: 22.221.021-3
+
+Script para migrar MongoDB para Neo4j:
+
+from pymongo import MongoClient
+from neo4j import GraphDatabase
+
+# Configurar conexões com MongoDB e Neo4j
+mongo_client = MongoClient("mongodb://localhost:27017/")
+mongo_db = mongo_client["ProjetoDB"]
+neo4j_driver = GraphDatabase.driver("bolt://localhost:7687", auth=("neo4j", "kimura0608"))
+
+# Função para criar nós no Neo4j
+def create_nodes(tx, collection_name, documents):
+    for doc in documents:
+        props = {k: v for k, v in doc.items() if k != "_id"}
+        props_string = ", ".join([f"{k}: ${k}" for k in props])
+        query = f"CREATE (n:{collection_name} {{{props_string}}})"
+        tx.run(query, **props)
+
+# Função para migrar uma coleção do MongoDB para Neo4j
+def migrate_collection(collection_name):
+    collection = mongo_db[collection_name]
+    documents = list(collection.find())
+    with neo4j_driver.session() as session:
+        session.execute_write(create_nodes, collection_name, documents)
+
+# Função principal para migrar todas as coleções
+def migrate_all_collections():
+    collections = mongo_db.list_collection_names()
+    for collection_name in collections:
+        migrate_collection(collection_name)
+        print(f"Coleção '{collection_name}' migrada com sucesso.")
+
+# Executar a migração
+if __name__ == "__main__":
+    migrate_all_collections()
+    print("Migração concluída com sucesso.")
+
+
+As relações foram criadas de forma manual no Neo4j
+
+Queries solicitadas:
+
+1-)
+MATCH (d:Department {name: "History"})
+OPTIONAL MATCH (c:Course)-[:cursos_oferecidos]->(d)
+RETURN c.name
+
+2-)
+MATCH (i:Instructor {department: "History"})
+OPTIONAL MATCH (i)-[:MINISTROU_OUTROS {semester: "Summer"}]->(c:Course {department: "History"})
+RETURN c.department, c.name
+
+3-)
+match(s:Student) where s.department = "History" return s
+
+4-)
+MATCH (i:Instructor)-[:EMPREGADO_EM]->(d:Department {name: 'History'})
+RETURN avg(i.salary) AS averageSalary
+
+5-)
+MATCH (s:Student)
+WHERE s.name = "Snow"
+RETURN s.credits
+
+6-)
+MATCH (i:Instructor {name: "Crick"})
+OPTIONAL MATCH (i)-[:MINISTROU_OUTROS {semester: "Summer"}]->(c:Course)
+RETURN i.name, c.name
+
+7-)
+MATCH (i:Instructor {name: "Katz"})
+OPTIONAL MATCH (i)-[:ENSINA_ALUNO]->(s:Student)
+RETURN s
+
+8-)
+MATCH (c:Classroom)-[:OFERECE_CURSO]->(c2:Course)
+WITH c, COUNT(1) AS numAulas
+WHERE numAulas = 0
+RETURN c
+
+9-)
+MATCH (c:Course)-[:REQUISITO_PARA]->(c1:Course {code: 'CS-101'})
+RETURN c.code
+
+10-)
+MATCH (i:Instructor)
+OPTIONAL MATCH (i)-[:PROFESSOR_ALUNO]->(s:Student)
+RETURN i.name, COUNT(s) AS numAlunos

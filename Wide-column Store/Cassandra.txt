@@ -1,0 +1,32 @@
+Projeto Cassandra
+
+Thiago Ayres Kimura - RA: 22.221.045-2
+Giovanna Borges Tamagnini - RA: 22.221.016-3
+Gabryel Lourenço Maciel de Morais - RA: 22.221.021-3
+
+1-)
+SELECT course_name FROM Courses WHERE department_id = {dept_id};
+
+2-)
+SELECT subject_name FROM Subjects WHERE course_id = {course} AND semester = '{term}';
+
+3-)
+SELECT student_name FROM Students WHERE course_id = {course};
+
+4-) Não conseguimos
+
+5-) Não conseguimos
+
+6-)
+SELECT student_name FROM Students WHERE course_id = {course};
+
+7-)
+SELECT student_id FROM Advisors WHERE professor_id = {professor};
+
+8-)
+SELECT classroom_id FROM Classrooms WHERE course_id = NULL;
+
+9-)
+SELECT prerequisite_course_id FROM Prerequisites WHERE course_id = {course};
+
+10-) Não conseguimos
